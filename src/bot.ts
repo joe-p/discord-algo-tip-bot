@@ -42,7 +42,12 @@ export namespace AlgoDiscordTipBot {
 
       const verifyFunction = (user: string, userAddress: string) => {
         if (user === interactionTag || userAddress === interactionAddress) {
-          interaction.editReply(`Verified ${user} owns ${userAddress}`)
+          if (interaction.replied) {
+            interaction.editReply(`Verified ${user} owns ${userAddress}`)
+          } else {
+            interaction.reply(`Verified ${user} owns ${userAddress}`)
+          }
+
           this.verificationServer.events.removeListener('verify', verifyFunction)
         }
       }
