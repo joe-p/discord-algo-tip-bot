@@ -66,17 +66,18 @@ server.start(port, () => {
     const { commandName } = interaction
 
     if (commandName === 'verify') {
-      const address = interaction.options.getString('address') as string
-      const user = interaction.user.tag
+      const interactionAddress = interaction.options.getString('address') as string
+      const interactionTag = interaction.user.tag
 
-      // server.register('MonopolyMan#1876', 'D34DXBU2LDSFAYXD2WTGD3FVT2CFCQBTLHMFESUDC237SHSVODQNATP264')
-      server.register(user, address, async (url) => {
-        await interaction.reply(`Visit ${url} to verify you own ${address}`)
+      server.register(interactionTag, interactionAddress, async (url) => {
+        await interaction.reply(`Visit ${url} to verify you own ${interactionAddress}`)
       })
 
       const verifyFunction = (user: string, userAddress: string) => {
-        interaction.editReply(`Verified ${user} owns ${userAddress}`)
-        server.events.removeListener('verify', verifyFunction)
+        if (user === interactionTag || userAddress === interactionAddress) {
+          interaction.editReply(`Verified ${user} owns ${userAddress}`)
+          server.events.removeListener('verify', verifyFunction)
+        }
       }
 
       server.events.addListener('verify', verifyFunction)
