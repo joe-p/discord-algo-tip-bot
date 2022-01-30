@@ -53,15 +53,15 @@ export namespace AlgoDiscordTipBot {
       const interactionTag = interaction.user.tag
 
       this.verificationServer.register(interactionTag, interactionAddress, async (url) => {
-        await interaction.reply(`Visit ${url} to verify you own ${interactionAddress}`)
+        await interaction.reply({ content: `Visit ${url} to verify you own ${interactionAddress}`, ephemeral: true })
       })
 
       const verifyFunction = (user: string, userAddress: string) => {
         if (user === interactionTag || userAddress === interactionAddress) {
           if (interaction.replied) {
-            interaction.editReply(`Verified ${user} owns ${userAddress}`)
+            interaction.editReply(`Verified you own ${userAddress}`)
           } else {
-            interaction.reply(`Verified ${user} owns ${userAddress}`)
+            interaction.reply({ content: `Verified you own ${userAddress}`, ephemeral: true })
           }
 
           this.verificationServer.events.removeListener('verify', verifyFunction)
@@ -78,24 +78,24 @@ export namespace AlgoDiscordTipBot {
 
       this.verificationServer.tip(from.tag, to.tag, amount, (status: boolean, fromAddress: string, toAddress: string, url?: string, txID?: string) => {
         if (!status) {
-          if (!fromAddress && !toAddress) {
-            interaction.reply(`Tip FAILED! ${from} and ${to} need to verify their addresses with /verify`)
-          } else if (!fromAddress) {
-            interaction.reply(`Tip FAILED! ${from} needs to verify their address with /verify`)
-          } else if (!toAddress) {
-            interaction.reply(`Tip FAILED! ${to} needs to verify their address with /verify`)
+          if (!fromAddress) {
+            interaction.reply({ content: 'Tip failed! You need to verify your address with `/verify`', ephemeral: true })
+          }
+
+          if (!toAddress) {
+            to.send(`${from} tried to send you a tip but you don't have a verified address. You can use the \`/verify\` command to verify an address for future tips`)
           }
           return
         }
 
-        interaction.reply(`Visit ${url} to send a tip to ${to}`)
+        interaction.reply({ content: `Visit ${url} to send  ${amount} to ${to}`, ephemeral: true })
 
         const sentFunction = (sentTxID: string) => {
           if (sentTxID !== txID) {
             return
           }
 
-          interaction.editReply(`Tip of ${amount} from ${from} to ${to} | ${txID} | Sent`)
+          interaction.editReply(`${amount} tip to ${to} has been sent. It is current waiting for confirmation. \`${txID})\``)
           this.verificationServer.events.removeListener('sent', sentFunction)
         }
 
@@ -106,7 +106,8 @@ export namespace AlgoDiscordTipBot {
             return
           }
 
-          interaction.editReply(`Tip of ${amount} from ${from} to ${to} | ${txID} | Verified!`)
+          interaction.editReply(`${amount} tip to ${to} has been verified! \`${txID}\``)
+          interaction.channel?.send(`${from} tipped ${to} ${amount}! \`${txID}\``)
           this.verificationServer.events.removeListener('sent', confirmedFunction)
         }
 
