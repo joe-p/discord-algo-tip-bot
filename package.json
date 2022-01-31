@@ -1,8 +1,8 @@
 {
-  "name": "discord_algo_tipbot",
-  "version": "1.0.0",
+  "name": "@joe-p/discord-algo-tip-bot",
+  "version": "0.1.0",
   "main": "index.js",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "start": "tsc --build && tsc && node dist/bot.js"
   },

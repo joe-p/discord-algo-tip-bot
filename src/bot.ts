@@ -1,4 +1,4 @@
-import AlgoTipBot from '../../algo_tip_bot/dist/server'
+import AlgoTipServer from '../../algo_tip_bot/dist/server'
 import algosdk from 'algosdk'
 import discordJS from 'discord.js'
 import secrets from './secrets.json'
@@ -6,13 +6,13 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v9'
 
-export namespace AlgoDiscordTipBot {
+export namespace DiscordAlgoTipBot {
   export class Bot {
     client: discordJS.Client
-    verificationServer : AlgoTipBot.VerificationServer
+    tipServer : AlgoTipServer.Server
 
-    constructor (verificationServer: AlgoTipBot.VerificationServer) {
-      this.verificationServer = verificationServer
+    constructor (tipServer: AlgoTipServer.Server) {
+      this.tipServer = tipServer
       this.client = new discordJS.Client({ intents: [discordJS.Intents.FLAGS.GUILDS] })
     }
 
@@ -52,7 +52,7 @@ export namespace AlgoDiscordTipBot {
       const interactionAddress = interaction.options.getString('address') as string
       const interactionTag = interaction.user.tag
 
-      this.verificationServer.register(interactionTag, interactionAddress, async (url) => {
+      this.tipServer.register(interactionTag, interactionAddress, async (url) => {
         await interaction.reply({ content: `Visit ${url} to verify you own ${interactionAddress}`, ephemeral: true })
       })
 
@@ -64,11 +64,11 @@ export namespace AlgoDiscordTipBot {
             interaction.reply({ content: `Verified you own ${userAddress}`, ephemeral: true })
           }
 
-          this.verificationServer.events.removeListener('verify', verifyFunction)
+          this.tipServer.events.removeListener('verify', verifyFunction)
         }
       }
 
-      this.verificationServer.events.addListener('verify', verifyFunction)
+      this.tipServer.events.addListener('verify', verifyFunction)
     }
 
     tipCommand (interaction: discordJS.CommandInteraction) {
@@ -76,7 +76,7 @@ export namespace AlgoDiscordTipBot {
       const from = interaction.user
       const amount = interaction.options.getInteger('amount') as number
 
-      this.verificationServer.tip(from.tag, to.tag, amount, (status: boolean, fromAddress: string, toAddress: string, url?: string, txID?: string) => {
+      this.tipServer.tip(from.tag, to.tag, amount, (status: boolean, fromAddress: string, toAddress: string, url?: string, txID?: string) => {
         if (!status) {
           if (!fromAddress) {
             interaction.reply({ content: 'Tip failed! You need to verify your address with `/verify`', ephemeral: true })
@@ -96,10 +96,10 @@ export namespace AlgoDiscordTipBot {
           }
 
           interaction.editReply(`${amount} tip to ${to} has been sent. It is current waiting for confirmation. \`${txID})\``)
-          this.verificationServer.events.removeListener('sent', sentFunction)
+          this.tipServer.events.removeListener('sent', sentFunction)
         }
 
-        this.verificationServer.events.addListener('sent', sentFunction)
+        this.tipServer.events.addListener('sent', sentFunction)
 
         const confirmedFunction = (sentTxID: string) => {
           if (sentTxID !== txID) {
@@ -108,10 +108,10 @@ export namespace AlgoDiscordTipBot {
 
           interaction.editReply(`${amount} tip to ${to} has been verified! \`${txID}\``)
           interaction.channel?.send(`${from} tipped ${to} ${amount}! \`${txID}\``)
-          this.verificationServer.events.removeListener('sent', confirmedFunction)
+          this.tipServer.events.removeListener('sent', confirmedFunction)
         }
 
-        this.verificationServer.events.addListener('sent', confirmedFunction)
+        this.tipServer.events.addListener('sent', confirmedFunction)
       })
     }
 
@@ -130,7 +130,7 @@ export namespace AlgoDiscordTipBot {
     }
 
     start (port: number) {
-      this.verificationServer.start(port, () => {
+      this.tipServer.start(port, () => {
         console.log(`Listening on port ${port}`)
 
         this.client.login(secrets.botToken)
@@ -152,9 +152,9 @@ const serverOptions = {
   service: 'Algorand Discord | https://discord.gg/algorand',
   description: 'Proof of wallet ownership is needed for tipping functionality on the official Algorand discord server.',
   url: 'http://192.168.1.212:3001'
-} as AlgoTipBot.VerificationServerOptions
+} as AlgoTipServer.ServerOptions
 
-const vServer = new AlgoTipBot.VerificationServer(serverOptions)
+const vServer = new AlgoTipServer.Server(serverOptions)
 
-const bot = new AlgoDiscordTipBot.Bot(vServer)
+const bot = new DiscordAlgoTipBot.Bot(vServer)
 bot.start(3001)
