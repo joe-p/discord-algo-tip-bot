@@ -1,4 +1,4 @@
-import AlgoTipServer from '../../algo_tip_bot/dist/server'
+import AlgoTipServer from '../../algo-tip-server/dist/server'
 import algosdk from 'algosdk'
 import discordJS from 'discord.js'
 import secrets from './secrets.json'

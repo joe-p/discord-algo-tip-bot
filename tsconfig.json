@@ -1,6 +1,6 @@
 {
   "references": [
-    { "path": "../algo_tip_bot" }
+    { "path": "../algo-tip-server" }
   ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
