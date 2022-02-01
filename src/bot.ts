@@ -87,18 +87,30 @@ export namespace DiscordAlgoTipBot {
           return
         }
 
-        interaction.reply({ content: `Visit ${url} to send  ${amount} to ${to}`, ephemeral: true })
+        interaction.reply({ content: `Visit ${url} to send  ${amount.toLocaleString()} to ${to}`, ephemeral: true })
+
+        // TODO errorObj type
+        const errorFunction = (errorObj: any) => {
+          if (errorObj.type === 'unknown') {
+            interaction.editReply(`**ERROR:** \`\`\`${errorObj.error}\`\`\``)
+          } else if (errorObj.type === 'overspend') {
+            interaction.editReply(`**ERROR:** You tried to send ${to} ${amount.toLocaleString()} but you only have ${errorObj.balance.toLocaleString()} in \`${fromAddress}\``)
+          }
+          this.tipServer.events.removeListener(`error:${txID}`, errorFunction)
+        }
+
+        this.tipServer.events.addListener(`error:${txID}`, errorFunction)
 
         const sentFunction = () => {
-          interaction.editReply(`${amount} tip to ${to} has been sent. It is current waiting for confirmation. \`${txID})\``)
+          interaction.editReply(`${amount.toLocaleString()} tip to ${to} has been sent. It is current waiting for confirmation. \`${txID})\``)
           this.tipServer.events.removeListener(`sent:${txID}`, sentFunction)
         }
 
         this.tipServer.events.addListener(`sent:${txID}`, sentFunction)
 
         const confirmedFunction = () => {
-          interaction.editReply(`${amount} tip to ${to} has been confirmed! \`${txID}\``)
-          interaction.channel?.send(`${from} tipped ${to} ${amount}! \`${txID}\``)
+          interaction.editReply(`${amount.toLocaleString()} tip to ${to} has been confirmed! \`${txID}\``)
+          interaction.channel?.send(`${from} tipped ${to} ${amount.toLocaleString()}! \`${txID}\``)
           this.tipServer.events.removeListener(`confirmed:${txID}`, confirmedFunction)
         }
 
