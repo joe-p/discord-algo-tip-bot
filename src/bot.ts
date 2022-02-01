@@ -53,15 +53,15 @@ export namespace DiscordAlgoTipBot {
       const interactionTag = interaction.user.tag
 
       this.tipServer.register(interactionTag, interactionAddress, async (url) => {
-        await interaction.reply({ content: `Visit ${url} to verify you own ${interactionAddress}`, ephemeral: true })
+        await interaction.reply({ content: `Visit ${url} to verify you own \`${interactionAddress}\``, ephemeral: true })
       })
 
       const verifyFunction = (user: string, userAddress: string) => {
         if (user === interactionTag || userAddress === interactionAddress) {
           if (interaction.replied) {
-            interaction.editReply(`Verified you own ${userAddress}`)
+            interaction.editReply(`Verified you own \`${userAddress}\``)
           } else {
-            interaction.reply({ content: `Verified you own ${userAddress}`, ephemeral: true })
+            interaction.reply({ content: `Verified you own \`${userAddress}\``, ephemeral: true })
           }
 
           this.tipServer.events.removeListener('verify', verifyFunction)
@@ -83,6 +83,7 @@ export namespace DiscordAlgoTipBot {
           }
 
           if (!toAddress) {
+            interaction.reply({ content: `${to} does not have a verified addressed. I sent them a DM to let them know you tried to tip them`, ephemeral: true })
             to.send(`${from} tried to send you a tip but you don't have a verified address. You can use the \`/verify\` command to verify an address for future tips`)
           }
           return
