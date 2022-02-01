@@ -49,26 +49,24 @@ export namespace DiscordAlgoTipBot {
     }
 
     verifyCommand (interaction: discordJS.CommandInteraction) {
-      const interactionAddress = interaction.options.getString('address') as string
-      const interactionTag = interaction.user.tag
+      const address = interaction.options.getString('address') as string
+      const tag = interaction.user.tag
 
-      this.tipServer.register(interactionTag, interactionAddress, async (url) => {
-        await interaction.reply({ content: `Visit ${url} to verify you own \`${interactionAddress}\``, ephemeral: true })
+      this.tipServer.register(tag, address, async (url) => {
+        await interaction.reply({ content: `Visit ${url} to verify you own \`${address}\``, ephemeral: true })
       })
 
-      const verifyFunction = (user: string, userAddress: string) => {
-        if (user === interactionTag || userAddress === interactionAddress) {
-          if (interaction.replied) {
-            interaction.editReply(`Verified you own \`${userAddress}\``)
-          } else {
-            interaction.reply({ content: `Verified you own \`${userAddress}\``, ephemeral: true })
-          }
-
-          this.tipServer.events.removeListener('verify', verifyFunction)
+      const verifyFunction = () => {
+        if (interaction.replied) {
+          interaction.editReply(`Verified you own \`${address}\``)
+        } else {
+          interaction.reply({ content: `Verified you own \`${address}\``, ephemeral: true })
         }
+
+        this.tipServer.events.removeListener(`verify:${tag}-${address}`, verifyFunction)
       }
 
-      this.tipServer.events.addListener('verify', verifyFunction)
+      this.tipServer.events.addListener(`verify:${tag}-${address}`, verifyFunction)
     }
 
     tipCommand (interaction: discordJS.CommandInteraction) {
@@ -91,28 +89,20 @@ export namespace DiscordAlgoTipBot {
 
         interaction.reply({ content: `Visit ${url} to send  ${amount} to ${to}`, ephemeral: true })
 
-        const sentFunction = (sentTxID: string) => {
-          if (sentTxID !== txID) {
-            return
-          }
-
+        const sentFunction = () => {
           interaction.editReply(`${amount} tip to ${to} has been sent. It is current waiting for confirmation. \`${txID})\``)
-          this.tipServer.events.removeListener('sent', sentFunction)
+          this.tipServer.events.removeListener(`sent:${txID}`, sentFunction)
         }
 
-        this.tipServer.events.addListener('sent', sentFunction)
+        this.tipServer.events.addListener(`sent:${txID}`, sentFunction)
 
-        const confirmedFunction = (sentTxID: string) => {
-          if (sentTxID !== txID) {
-            return
-          }
-
-          interaction.editReply(`${amount} tip to ${to} has been verified! \`${txID}\``)
+        const confirmedFunction = () => {
+          interaction.editReply(`${amount} tip to ${to} has been confirmed! \`${txID}\``)
           interaction.channel?.send(`${from} tipped ${to} ${amount}! \`${txID}\``)
-          this.tipServer.events.removeListener('sent', confirmedFunction)
+          this.tipServer.events.removeListener(`confirmed:${txID}`, confirmedFunction)
         }
 
-        this.tipServer.events.addListener('sent', confirmedFunction)
+        this.tipServer.events.addListener(`confirmed:${txID}`, confirmedFunction)
       })
     }
 
