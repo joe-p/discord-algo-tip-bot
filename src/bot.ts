@@ -147,11 +147,11 @@ const algodToken = ''
 const serverOptions = {
   algodClient: new algosdk.Algodv2(algodToken, algodServer, ''),
   database: 'sqlite://db.sqlite',
-  quicksigURL: 'http://192.168.1.212:3000',
+  quicksigURL: 'https://quicksig.me',
   account: algosdk.generateAccount(),
   service: 'Algorand Discord | https://discord.gg/algorand',
   description: 'Proof of wallet ownership is needed for tipping functionality on the official Algorand discord server.',
-  url: 'http://192.168.1.212:3001'
+  url: 'https://disco.quicksig.me'
 } as AlgoTipServer.ServerOptions
 
 const vServer = new AlgoTipServer.Server(serverOptions)
