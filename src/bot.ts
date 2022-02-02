@@ -98,9 +98,23 @@ export namespace DiscordAlgoTipBot {
         const errorFunction = (errorObj: any) => {
           if (errorObj.type === 'unknown') {
             interaction.editReply(`**ERROR:** \`\`\`${errorObj.error}\`\`\``)
+          
           } else if (errorObj.type === 'overspend') {
             interaction.editReply(`**ERROR:** You tried to send ${to} ${amount.toLocaleString()} μAlgos but you only have ${errorObj.balance.toLocaleString()} μAlgos in \`${fromAddress}\``)
+          
+          } else if (errorObj.type === 'minBalance') {
+          
+            if (errorObj.account == fromAddress) {
+              let reply = `**ERROR:** You tried to send ${to} ${amount.toLocaleString()} μAlgos but it would bring your balance to`
+              reply += ` ${errorObj.ammountLeft.toLocaleString()} μAlgos which is below the minimum of ${errorObj.min.toLocaleString()} μAlgos`
+              interaction.editReply(reply)
+          
+            } else {
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but they meet the minimum balance requirement. I will DM them to let them know`)
+              to.send(`${from} tried to send you ${amount.toLocaleString()} μAlgos but your doesn't meet the ${errorObj.min.toLocaleString()} μAlgo requirement`)
+            }
           }
+          
           this.tipServer.events.removeListener(`error:${txID}`, errorFunction)
         }
 
