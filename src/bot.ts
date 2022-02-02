@@ -74,6 +74,11 @@ export namespace DiscordAlgoTipBot {
       const from = interaction.user
       const amount = interaction.options.getInteger('amount') as number
 
+      if (to.id == secrets.clientID) {
+        interaction.reply({ content: "You can't tip me... I'm just a bot!", ephemeral: true })
+        return
+      }
+
       this.tipServer.tip(from.tag, to.tag, amount, (status: boolean, fromAddress: string, toAddress: string, url?: string, txID?: string) => {
         if (!status) {
           if (!fromAddress) {
