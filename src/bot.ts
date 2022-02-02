@@ -81,7 +81,7 @@ export namespace DiscordAlgoTipBot {
           }
 
           if (!toAddress) {
-            interaction.reply({ content: `${to} does not have a verified addressed. I sent them a DM to let them know you tried to tip them`, ephemeral: true })
+            interaction.reply({ content: `${to} does not have a verified addres. I sent them a DM to let them know you tried to tip them`, ephemeral: true })
             to.send(`${from} tried to send you a tip but you don't have a verified address. You can use the \`/verify\` command to verify an address for future tips`)
           }
           return
