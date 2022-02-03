@@ -1,7 +1,7 @@
 import AlgoTipServer from '../../algo-tip-server/dist/server'
 import algosdk from 'algosdk'
 import discordJS from 'discord.js'
-import secrets from './secrets.json'
+import config from './config.json'
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v9'
@@ -41,9 +41,9 @@ export namespace DiscordAlgoTipBot {
         this.tipCommandbuilder()
       ].map(command => command.toJSON())
 
-      const rest = new REST({ version: '9' }).setToken(secrets.botToken)
+      const rest = new REST({ version: '9' }).setToken(config.botToken)
 
-      rest.put(Routes.applicationGuildCommands(secrets.clientID, secrets.guildID), { body: commands })
+      rest.put(Routes.applicationGuildCommands(config.clientID, config.guildID), { body: commands })
         .then(() => console.log('Successfully registered application commands.'))
         .catch(console.error)
     }
@@ -74,7 +74,7 @@ export namespace DiscordAlgoTipBot {
       const from = interaction.user
       const amount = interaction.options.getInteger('amount') as number
 
-      if (to.id == secrets.clientID) {
+      if (to.id == config.clientID) {
         interaction.reply({ content: "You can't tip me... I'm just a bot!", ephemeral: true })
         return
       }
@@ -155,7 +155,7 @@ export namespace DiscordAlgoTipBot {
       this.tipServer.start(port, () => {
         console.log(`Listening on port ${port}`)
 
-        this.client.login(secrets.botToken)
+        this.client.login(config.botToken)
         this.registerCommands()
         this.handleCommands()
       })
@@ -169,11 +169,11 @@ const algodToken = ''
 const serverOptions = {
   algodClient: new algosdk.Algodv2(algodToken, algodServer, ''),
   database: 'sqlite://db.sqlite',
-  quicksigURL: 'https://quicksig.me',
+  quicksigURL: config.quicksigURL,
   account: algosdk.generateAccount(),
   service: 'Algorand Discord | https://discord.gg/algorand',
   description: 'Proof of wallet ownership is needed for tipping functionality on the official Algorand discord server.',
-  url: 'https://disco.quicksig.me'
+  url: config.url
 } as AlgoTipServer.ServerOptions
 
 const vServer = new AlgoTipServer.Server(serverOptions)
