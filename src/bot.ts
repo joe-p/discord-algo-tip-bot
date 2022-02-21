@@ -112,8 +112,12 @@ export namespace DiscordAlgoTipBot {
               to.send(`${from} tried to send you ${amount.toLocaleString()} μAlgos but your doesn't meet the ${errorObj.min.toLocaleString()} μAlgo requirement`)
             }
           } else if (errorObj.type === 'assetMissing') {
-            interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but they are not opted in to μAlgo. I will DM them to let them know!`)
-            to.send(`${from} tried to send you ${amount.toLocaleString()} μAlgos but you aren't opted in to μAlgo.`)
+            if (errorObj.account === fromAddress) {
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but your are not opted in to μAlgo.`)
+            } else {
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but they are not opted in to μAlgo. I will DM them to let them know!`)
+              to.send(`${from} tried to send you ${amount.toLocaleString()} μAlgos but you aren't opted in to μAlgo.`)
+            }
           }
 
           this.tipServer.events.removeListener(`error:${txID}`, errorFunction)
