@@ -100,7 +100,7 @@ export namespace DiscordAlgoTipBot {
         const errorFunction = (errorObj: any) => {
           if (errorObj.type === 'unknown') {
             interaction.editReply(`**ERROR:** \`\`\`${errorObj.error}\`\`\``)
-          } else if (errorObj.type === 'overspend') {
+          } else if (errorObj.type === 'overspend' || errorObj.type === 'underflow') {
             interaction.editReply(`**ERROR:** You tried to send ${to} ${amount.toLocaleString()} μAlgos but you only have ${errorObj.balance.toLocaleString()} μAlgos in \`${fromAddress}\``)
           } else if (errorObj.type === 'minBalance') {
             if (errorObj.account === fromAddress) {
