@@ -11,11 +11,22 @@ export namespace DiscordAlgoTipBot {
     client: discordJS.Client
     tipServer: AlgoTipServer.Server
     assetIndex: number
+    assetUnit: string
 
-    constructor (tipServer: AlgoTipServer.Server, assetIndex?: number) {
+    constructor (tipServer: AlgoTipServer.Server, assetIndex?: number, assetUnit?: string) {
       this.tipServer = tipServer
       this.client = new discordJS.Client({ intents: [discordJS.Intents.FLAGS.GUILDS] })
       this.assetIndex = assetIndex || 0
+
+      if (!assetUnit) {
+        if (assetIndex) {
+          this.assetUnit = this.assetIndex.toString() || ''
+        } else {
+          this.assetUnit = 'μAlgo'
+        }
+      } else {
+        this.assetUnit = assetUnit
+      }
     }
 
     verifyCommandBuilder () {
@@ -28,12 +39,12 @@ export namespace DiscordAlgoTipBot {
 
     tipCommandbuilder () {
       return new SlashCommandBuilder().setName('tip')
-        .setDescription('Tip a user with algo')
+        .setDescription(`Tip a user with ${this.assetUnit}`)
         .addUserOption(option => option.setName('to')
           .setDescription('The user you wish to tip')
           .setRequired(true))
         .addIntegerOption(option => option.setName('amount')
-          .setDescription('The amount you wish to tip (in μAlgos)')
+          .setDescription(`The amount of ${this.assetUnit} you wish to tip`)
           .setRequired(true))
     }
 
@@ -94,29 +105,29 @@ export namespace DiscordAlgoTipBot {
           return
         }
 
-        interaction.reply({ content: `Visit ${url} to send  ${amount.toLocaleString()} μAlgos to ${to}`, ephemeral: true })
+        interaction.reply({ content: `Visit ${url} to send  ${amount.toLocaleString()} ${this.assetUnit} to ${to}`, ephemeral: true })
 
         // TODO errorObj type
         const errorFunction = (errorObj: any) => {
           if (errorObj.type === 'unknown') {
             interaction.editReply(`**ERROR:** \`\`\`${errorObj.error}\`\`\``)
           } else if (errorObj.type === 'overspend' || errorObj.type === 'underflow') {
-            interaction.editReply(`**ERROR:** You tried to send ${to} ${amount.toLocaleString()} μAlgos but you only have ${errorObj.balance.toLocaleString()} μAlgos in \`${fromAddress}\``)
+            interaction.editReply(`**ERROR:** You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but you only have ${errorObj.balance.toLocaleString()} ${this.assetUnit} in \`${fromAddress}\``)
           } else if (errorObj.type === 'minBalance') {
             if (errorObj.account === fromAddress) {
-              let reply = `**ERROR:** You tried to send ${to} ${amount.toLocaleString()} μAlgos but it would bring your balance to`
-              reply += ` ${errorObj.ammountLeft.toLocaleString()} μAlgos which is below the minimum of ${errorObj.min.toLocaleString()} μAlgos`
+              let reply = `**ERROR:** You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but it would bring your balance to`
+              reply += ` ${errorObj.ammountLeft.toLocaleString()} ${this.assetUnit} which is below the minimum of ${errorObj.min.toLocaleString()} ${this.assetUnit}`
               interaction.editReply(reply)
             } else {
-              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but they meet the minimum balance requirement. I will DM them to let them know`)
-              to.send(`${from} tried to send you ${amount.toLocaleString()} μAlgos but your doesn't meet the ${errorObj.min.toLocaleString()} μAlgo requirement`)
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but they meet the minimum balance requirement. I will DM them to let them know`)
+              to.send(`${from} tried to send you ${amount.toLocaleString()} ${this.assetUnit} but your doesn't meet the ${errorObj.min.toLocaleString()} ${this.assetUnit} requirement`)
             }
           } else if (errorObj.type === 'assetMissing') {
             if (errorObj.account === fromAddress) {
-              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but your are not opted in to μAlgo.`)
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but your are not opted in to ${this.assetUnit}.`)
             } else {
-              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} μAlgos but they are not opted in to μAlgo. I will DM them to let them know!`)
-              to.send(`${from} tried to send you ${amount.toLocaleString()} μAlgos but you aren't opted in to μAlgo.`)
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but they are not opted in to ${this.assetUnit}. I will DM them to let them know!`)
+              to.send(`${from} tried to send you ${amount.toLocaleString()} ${this.assetUnit} but you aren't opted in to ${this.assetUnit}.`)
             }
           }
 
@@ -126,15 +137,15 @@ export namespace DiscordAlgoTipBot {
         this.tipServer.events.addListener(`error:${txID}`, errorFunction)
 
         const sentFunction = () => {
-          interaction.editReply(`${amount.toLocaleString()} μAlgo tip to ${to} has been sent. It is currently waiting for confirmation. \`${txID})\``)
+          interaction.editReply(`${amount.toLocaleString()} ${this.assetUnit} tip to ${to} has been sent. It is currently waiting for confirmation. \`${txID})\``)
           this.tipServer.events.removeListener(`sent:${txID}`, sentFunction)
         }
 
         this.tipServer.events.addListener(`sent:${txID}`, sentFunction)
 
         const confirmedFunction = () => {
-          interaction.editReply(`${amount.toLocaleString()} μAlgo tip to ${to} has been confirmed! \`${txID}\``)
-          interaction.channel?.send(`${from} tipped ${to} ${amount.toLocaleString()} μAlgos! \`${txID}\``)
+          interaction.editReply(`${amount.toLocaleString()} ${this.assetUnit} tip to ${to} has been confirmed! \`${txID}\``)
+          interaction.channel?.send(`${from} tipped ${to} ${amount.toLocaleString()} ${this.assetUnit}! \`${txID}\``)
           this.tipServer.events.removeListener(`confirmed:${txID}`, confirmedFunction)
         }
 
@@ -183,5 +194,5 @@ const serverOptions = {
 
 const vServer = new AlgoTipServer.Server(serverOptions)
 
-const bot = new DiscordAlgoTipBot.Bot(vServer, 72894256)
+const bot = new DiscordAlgoTipBot.Bot(vServer, 72894256, 'ATDT')
 bot.start(3001)
