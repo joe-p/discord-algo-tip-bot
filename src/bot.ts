@@ -194,5 +194,5 @@ const serverOptions = {
 
 const vServer = new AlgoTipServer.Server(serverOptions)
 
-const bot = new DiscordAlgoTipBot.Bot(vServer, 72894256, 'ATDT')
+const bot = new DiscordAlgoTipBot.Bot(vServer, config.assetIndex, config.assetUnit)
 bot.start(3001)
