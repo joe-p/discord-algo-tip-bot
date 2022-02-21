@@ -9,11 +9,13 @@ import { Routes } from 'discord-api-types/v9'
 export namespace DiscordAlgoTipBot {
   export class Bot {
     client: discordJS.Client
-    tipServer : AlgoTipServer.Server
+    tipServer: AlgoTipServer.Server
+    assetIndex: number
 
-    constructor (tipServer: AlgoTipServer.Server) {
+    constructor (tipServer: AlgoTipServer.Server, assetIndex?: number) {
       this.tipServer = tipServer
       this.client = new discordJS.Client({ intents: [discordJS.Intents.FLAGS.GUILDS] })
+      this.assetIndex = assetIndex || 0
     }
 
     verifyCommandBuilder () {
@@ -79,7 +81,7 @@ export namespace DiscordAlgoTipBot {
         return
       }
 
-      this.tipServer.tip(from.tag, to.tag, amount, (status: boolean, fromAddress: string, toAddress: string, url?: string, txID?: string) => {
+      this.tipServer.tip(this.assetIndex, from.tag, to.tag, amount, (status: boolean, fromAddress: string, toAddress: string, url?: string, txID?: string) => {
         if (!status) {
           if (!fromAddress) {
             interaction.reply({ content: 'Tip failed! You need to verify your address with `/verify`', ephemeral: true })
@@ -174,5 +176,5 @@ const serverOptions = {
 
 const vServer = new AlgoTipServer.Server(serverOptions)
 
-const bot = new DiscordAlgoTipBot.Bot(vServer)
+const bot = new DiscordAlgoTipBot.Bot(vServer, 72894256)
 bot.start(3001)
