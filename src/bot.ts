@@ -82,6 +82,37 @@ export namespace DiscordAlgoTipBot {
       this.tipServer.events.addListener(`verify:${tag}-${address}`, verifyFunction)
     }
 
+    optin (user: discordJS.User) {
+      this.tipServer.optin(this.assetIndex, user.tag, (status, url, txID) => {
+        if (status) {
+          const sentFunction = () => {
+            user.send(`opt-in transaction \`${txID}\` has been sent to the network`)
+            this.tipServer.events.removeListener(`sent:${txID}`, sentFunction)
+          }
+
+          this.tipServer.events.addListener(`sent:${txID}`, sentFunction)
+
+          const confirmedFunction = () => {
+            user.send(`opt-in transaction \`${txID}\` has been confirmed! If you want to send a tip you must use the \`\\tip\` command again`)
+            this.tipServer.events.removeListener(`confirmed:${txID}`, confirmedFunction)
+          }
+
+          this.tipServer.events.addListener(`confirmed:${txID}`, confirmedFunction)
+
+          const errorFunction = (errorObj: any) => {
+            // TODO: Proper error handling
+            user.send(`**ERROR:** \`\`\`${errorObj.error}\`\`\``)
+
+            this.tipServer.events.removeListener(`error:${txID}`, errorFunction)
+          }
+
+          this.tipServer.events.addListener(`error:${txID}`, errorFunction)
+
+          user.send(`Visit ${url} to opt-in to ${this.assetUnit}`)
+        }
+      })
+    }
+
     tipCommand (interaction: discordJS.CommandInteraction) {
       const to = interaction.options.getUser('to') as discordJS.User
       const from = interaction.user
@@ -124,10 +155,12 @@ export namespace DiscordAlgoTipBot {
             }
           } else if (errorObj.type === 'assetMissing') {
             if (errorObj.account === fromAddress) {
-              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but your are not opted in to ${this.assetUnit}.`)
+              interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but your are not opted in to ${this.assetUnit}. I'll send you a DM if you want to opt-in`)
+              this.optin(from)
             } else {
               interaction.editReply(`You tried to send ${to} ${amount.toLocaleString()} ${this.assetUnit} but they are not opted in to ${this.assetUnit}. I will DM them to let them know!`)
               to.send(`${from} tried to send you ${amount.toLocaleString()} ${this.assetUnit} but you aren't opted in to ${this.assetUnit}.`)
+              this.optin(to)
             }
           }
 
